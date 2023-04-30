@@ -8,7 +8,20 @@ import (
 
 func MarshalBoard(b [][]*blackholes.Cell, allOpen bool) string {
 	var sb strings.Builder
+	sb.WriteString("  ")
+	for i := range b[0] {
+		sb.WriteString(strconv.Itoa(i))
+	}
+	sb.WriteString("\n")
+	sb.WriteString("  ")
+	for _ = range b[0] {
+		sb.WriteString("-")
+	}
+	sb.WriteString("\n")
+
 	for i := range b {
+		sb.WriteString(strconv.Itoa(i))
+		sb.WriteString("|")
 		for j := range b[i] {
 			c := b[i][j] // cell
 			if c.IsOpen || allOpen {
@@ -31,7 +44,7 @@ func marshalCellOpen(c *blackholes.Cell) string {
 	case c.IsBlackHole:
 		return "O"
 	case c.AdjacentHolesNumber == 0:
-		return " "
+		return "-"
 	default:
 		return strconv.Itoa(c.AdjacentHolesNumber)
 	}

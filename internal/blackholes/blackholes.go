@@ -10,11 +10,13 @@ type Cell struct {
 	IsBlackHole         bool
 	IsOpen              bool
 	AdjacentHolesNumber int
+	R, C                int // Raw, Column of the cell is used for debugging purposes in graph view
 }
 
 type Game struct {
 	Board       [][]*Cell // Matrix represents game state with first index is a row and second is a column of a cell.
 	N           int
+	K           int // K is number of black holes
 	State       GameState
 	CellsToOpen int
 }
@@ -27,14 +29,26 @@ const (
 	GameStateLost   GameState = "lost"
 )
 
+var (
+	ErrInvalidBoardSize        = errors.New("invalid board size (N)")
+	ErrInvalidBlackHolesNumber = errors.New("invalid black holes number (K)")
+)
+
 // NewGame creates and initializes new ready to play *Game with NxN board and K black holes.
-func NewGame(n int, k int) *Game {
+func NewGame(n int, k int) (*Game, error) {
+	if n <= 0 {
+		return nil, ErrInvalidBoardSize
+	}
+	if k <= 0 || k > n*n {
+		return nil, ErrInvalidBlackHolesNumber
+	}
 	return &Game{
 		Board:       newBoard(n, k),
 		N:           n,
+		K:           k,
 		State:       GameStateActive,
 		CellsToOpen: n * n,
-	}
+	}, nil
 }
 
 func newBoard(n int, k int) [][]*Cell {
@@ -44,7 +58,10 @@ func newBoard(n int, k int) [][]*Cell {
 	}
 	for i := range board {
 		for j := range board[i] {
-			board[i][j] = &Cell{}
+			board[i][j] = &Cell{
+				R: i,
+				C: j,
+			}
 		}
 	}
 
@@ -70,7 +87,7 @@ func newBoard(n int, k int) [][]*Cell {
 				if c < 0 || c >= n {
 					continue
 				}
-				board[r][c].AdjacentCells = append(board[i][j].AdjacentCells, board[r][c])
+				board[i][j].AdjacentCells = append(board[i][j].AdjacentCells, board[r][c])
 				if board[r][c].IsBlackHole {
 					adjacentHoles++
 				}
@@ -107,31 +124,31 @@ func (g *Game) Open(r, c int) error {
 		return nil
 	}
 
+	g.Board[r][c].IsOpen = true
 	g.CellsToOpen--
-	toVisit := make([]*Cell, len(g.Board[r][c].AdjacentCells))
+
+	// if current cell has 0 adjacent black holes, open neighbour cells
+	var toVisit []*Cell
+	toVisit = append(toVisit, g.Board[r][c])
 	visited := make(map[*Cell]struct{})
-	copy(toVisit, g.Board[r][c].AdjacentCells)
 	for len(toVisit) > 0 {
 		adjCell := toVisit[len(toVisit)-1]
-		toVisit = toVisit[:len(toVisit)-1]
-		if adjCell.IsBlackHole {
+		toVisit = toVisit[0 : len(toVisit)-1]
+		if _, ok := visited[adjCell]; ok {
 			continue
 		}
-		adjCell.IsOpen = true
-		g.CellsToOpen--
-		for _, adjAdj := range adjCell.AdjacentCells {
-			if _, ok := visited[adjAdj]; ok {
-				continue
-			}
-			if adjAdj.AdjacentHolesNumber != 0 {
-				continue
-			}
-			toVisit = append(toVisit, adjAdj)
-		}
 		visited[adjCell] = struct{}{}
+		if !adjCell.IsOpen {
+			adjCell.IsOpen = true
+			g.CellsToOpen--
+		}
+		if adjCell.AdjacentHolesNumber != 0 {
+			continue
+		}
+		toVisit = append(toVisit, adjCell.AdjacentCells...)
 	}
 
-	if g.CellsToOpen <= 0 {
+	if g.CellsToOpen <= g.K {
 		g.State = GameStateWon
 	}
 	return nil

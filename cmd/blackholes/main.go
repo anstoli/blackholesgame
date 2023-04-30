@@ -8,9 +8,16 @@ import (
 )
 
 func main() {
-	n := ReadInt("Enter size of the board (N)")
-	k := ReadInt("Enter number of black holes (K)")
-	g := blackholes.NewGame(n, k)
+	var g *blackholes.Game
+	for g == nil {
+		n := ReadInt("Enter size of the board (N)")
+		k := ReadInt("Enter number of black holes (K)")
+		var err error
+		g, err = blackholes.NewGame(n, k)
+		if err != nil {
+			fmt.Printf("error: %v\n", err)
+		}
+	}
 	for g.State == blackholes.GameStateActive {
 		fmt.Println(text.MarshalBoard(g.Board, false))
 		r := ReadInt("Enter row of cell to open")
