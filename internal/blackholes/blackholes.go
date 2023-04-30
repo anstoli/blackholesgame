@@ -123,6 +123,9 @@ func (g *Game) Open(r, c int) error {
 			if _, ok := visited[adjAdj]; ok {
 				continue
 			}
+			if adjAdj.AdjacentHolesNumber != 0 {
+				continue
+			}
 			toVisit = append(toVisit, adjAdj)
 		}
 		visited[adjCell] = struct{}{}
