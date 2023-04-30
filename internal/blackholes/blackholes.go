@@ -14,7 +14,7 @@ type Cell struct {
 }
 
 type Game struct {
-	Board       [][]*Cell // Matrix represents game state with first index is a row and second is a column of a cell.
+	Board       [][]*Cell // Board represents game state with first index is a row and second is a column of a cell.
 	N           int
 	K           int // K is number of black holes
 	State       GameState
@@ -52,19 +52,29 @@ func NewGame(n int, k int) (*Game, error) {
 }
 
 func newBoard(n int, k int) [][]*Cell {
-	board := make([][]*Cell, n)
-	for i := range board {
-		board[i] = make([]*Cell, n)
+	board := newBoardOfCells(n)
+	placeBlackHoles(n, k, board)
+	calcAdjacentBlackHoles(n, board)
+	return board
+}
+
+func newBoardOfCells(n int) [][]*Cell {
+	b := make([][]*Cell, n) // board
+	for i := range b {
+		b[i] = make([]*Cell, n)
 	}
-	for i := range board {
-		for j := range board[i] {
-			board[i][j] = &Cell{
+	for i := range b {
+		for j := range b[i] {
+			b[i][j] = &Cell{
 				R: i,
 				C: j,
 			}
 		}
 	}
+	return b
+}
 
+func placeBlackHoles(n int, k int, board [][]*Cell) {
 	for k > 0 {
 		r := rand.Intn(n) // row
 		c := rand.Intn(n) // column
@@ -74,7 +84,14 @@ func newBoard(n int, k int) [][]*Cell {
 		board[r][c].IsBlackHole = true
 		k--
 	}
+}
 
+// adjacentCells are indexes shift of adjacent cells starting from right one in clockwise order
+var adjacentCells = [][]int{
+	{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1},
+}
+
+func calcAdjacentBlackHoles(n int, board [][]*Cell) {
 	for i := range board {
 		for j := range board[i] {
 			adjacentHoles := 0
@@ -95,12 +112,6 @@ func newBoard(n int, k int) [][]*Cell {
 			board[i][j].AdjacentHolesNumber = adjacentHoles
 		}
 	}
-	return board
-}
-
-// adjacentCells are indexes shift of adjacent cells starting from right one in clockwise order
-var adjacentCells = [][]int{
-	{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1},
 }
 
 var (
