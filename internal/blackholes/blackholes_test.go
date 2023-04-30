@@ -2,6 +2,8 @@ package blackholes_test
 
 import (
 	"github.com/anstoli/blackholesgame/internal/blackholes"
+	bhtestutil "github.com/anstoli/blackholesgame/internal/blackholes/testutil"
+	"reflect"
 	"testing"
 )
 
@@ -37,29 +39,17 @@ func TestOpen(t *testing.T) {
 			t.Fatalf("NewGame error %v", err)
 		}
 
-		g.Board[0][0].IsBlackHole = false
-		g.Board[0][1].IsBlackHole = false
-		g.Board[0][2].IsBlackHole = false
+		bhtestutil.BoardSetBlackHolesFromBools(g.Board, [][]bool{
+			{false, false, false},
+			{false, false, false},
+			{false, false, true},
+		})
 
-		g.Board[1][0].IsBlackHole = false
-		g.Board[1][1].IsBlackHole = false
-		g.Board[1][2].IsBlackHole = false
-
-		g.Board[2][0].IsBlackHole = false
-		g.Board[2][1].IsBlackHole = false
-		g.Board[2][2].IsBlackHole = true
-
-		g.Board[0][0].AdjacentHolesNumber = 0
-		g.Board[0][1].AdjacentHolesNumber = 0
-		g.Board[0][2].AdjacentHolesNumber = 0
-
-		g.Board[1][0].AdjacentHolesNumber = 0
-		g.Board[1][1].AdjacentHolesNumber = 1
-		g.Board[1][2].AdjacentHolesNumber = 1
-
-		g.Board[2][0].AdjacentHolesNumber = 0
-		g.Board[2][1].AdjacentHolesNumber = 1
-		g.Board[2][2].AdjacentHolesNumber = 0
+		bhtestutil.BoardSetAdjacentHolesFromInts(g.Board, [][]int{
+			{0, 0, 0},
+			{0, 1, 1},
+			{0, 1, 0},
+		})
 
 		err = g.Open(0, 0)
 		if err != nil {
@@ -70,41 +60,15 @@ func TestOpen(t *testing.T) {
 			t.Errorf("Open State = %v, want %v", g.State, blackholes.GameStateWon)
 		}
 
-		if !g.Board[0][0].IsOpen {
-			t.Errorf("Open Board[0][0].IsOpen = %v, want %v", g.Board[0][0].IsOpen, true)
+		isOpen := bhtestutil.BoardOpenStateAsBools(g.Board)
+		isOpenExpected := [][]bool{
+			{true, true, true},
+			{true, true, true},
+			{true, true, false},
 		}
 
-		if !g.Board[0][1].IsOpen {
-			t.Errorf("Open Board[0][1].IsOpen = %v, want %v", g.Board[0][1].IsOpen, true)
+		if !reflect.DeepEqual(isOpen, isOpenExpected) {
+			t.Errorf("Game.Board.IsOpen =\n%v\n want\n%v", isOpen, isOpenExpected)
 		}
-
-		if !g.Board[0][2].IsOpen {
-			t.Errorf("Open Board[0][1].IsOpen = %v, want %v", g.Board[0][2].IsOpen, true)
-		}
-
-		if !g.Board[1][0].IsOpen {
-			t.Errorf("Open Board[1][0].IsOpen = %v, want %v", g.Board[1][0].IsOpen, true)
-		}
-
-		if !g.Board[1][1].IsOpen {
-			t.Errorf("Open Board[1][1].IsOpen = %v, want %v", g.Board[1][1].IsOpen, true)
-		}
-
-		if !g.Board[1][2].IsOpen {
-			t.Errorf("Open Board[1][0].IsOpen = %v, want %v", g.Board[1][2].IsOpen, true)
-		}
-
-		if !g.Board[2][0].IsOpen {
-			t.Errorf("Open Board[2][0].IsOpen = %v, want %v", g.Board[2][0].IsOpen, true)
-		}
-
-		if !g.Board[2][1].IsOpen {
-			t.Errorf("Open Board[2][1].IsOpen = %v, want %v", g.Board[2][1].IsOpen, true)
-		}
-
-		if g.Board[2][2].IsOpen {
-			t.Errorf("Open Board[2][0].IsOpen = %v, want %v", g.Board[2][2].IsOpen, false)
-		}
-
 	})
 }
